@@ -1,0 +1,19 @@
+
+.todoCard{
+    text-align: center;
+    padding: 8px 24px;
+    background: #FFFFFF;
+    width: 100%;
+}
+
+.done{
+     border: 0.5px solid #B4F2C9;
+     box-shadow: 0px 4px 4px rgba(215, 244, 225, 0.25);
+     border-radius: 8px;
+}
+
+.undone{
+    border: 0.5px solid #F3BDBD;
+    box-shadow: 0px 4px 4px rgba(243, 189, 189, 0.15);
+    border-radius: 8px;
+}
