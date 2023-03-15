@@ -1,11 +1,12 @@
-.listColumn{
-    overflow: auto;                /* KEEP THIS, for FF & Edge (see link below) */
-    display: flex;                 /* NEW */
-    flex-direction: column;        /* NEW */
-    gap: 8px;
-    border: 0.5px solid rgba(0, 0, 0, 0.25);
-    border-radius: 16px;
-    width: 100%;
-    padding: 16px;
-    height: 100%;
+.listColumn {
+  display: flex; /* NEW */
+  flex-direction: column; /* NEW */
+  gap: 8px;
+  border: 0.5px solid rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  width: 100%;
+  height: 80vh;
+  overflow: scroll;
+  overflow-x: hidden;
 }

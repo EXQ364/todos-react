@@ -1,78 +1,112 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Header } from './components/Header/Header'
-import './App.css'
-import Wrapper from './components/UI/Wrapper/Wrapper'
-import InlineFlex from './components/UI/Layout/InlineFlex/InlineFlex'
-import { ITodo } from './types/interfaces'
-import { TodoContext } from './hooks/TodoContext'
-import Count from './components/Count/Count'
-import ListColumn from './components/Count/ListColumn/ListColumn'
-import TodoCard from './components/TodoCard/TodoCard'
-import axios from 'axios'
-
-
-
+import React, { useEffect, useState } from "react";
+import { Header } from "./components/Header/Header";
+import "./App.css";
+import Wrapper from "./components/UI/Wrapper/Wrapper";
+import InlineFlex from "./components/UI/Layout/InlineFlex/InlineFlex";
+import { ITodo } from "./types/interfaces";
+import { TodoContext } from "./hooks/TodoContext";
+import Count from "./components/Count/Count";
+import ListColumn from "./components/Count/ListColumn/ListColumn";
+import axios from "axios";
+import Button from "./components/UI/Button/Button";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 export default function App() {
+	const [todos, setTodos] = useState<ITodo[]>([]);
 
+	useEffect(() => {
+		axios
+			.get("https://jsonplaceholder.typicode.com/todos?_limit=100")
+			.then((res) => {
+				const doneTodos = res.data.filter((todo: ITodo) => todo.completed);
+				const undoneTodos = res.data.filter(
+					(todo: ITodo) => !todo.completed
+				);
+				setTodos([...doneTodos, ...undoneTodos]);
+			});
+	}, []);
 
-  const [todos, setTodos] = useState<ITodo[]>
-    ([
-      {
-        "id": 1,
-        "title": "delectus aut autem",
-        "completed": false
-      },
-      {
-        "id": 2,
-        "title": "quis ut nam facilis et officia qui",
-        "completed": false
-      },
-      {
-        "id": 3,
-        "title": "fugiat veniam minus",
-        "completed": false
-      },
-      {
-        "id": 4,
-        "title": "et porro tempora",
-        "completed": true
-      },
-      {
-        "id": 5,
-        "title": "laboriosam mollitia et enim quasi adipisci quia provident illum",
-        "completed": false
-      },
+	const doneTodos = todos.filter((todo) => todo.completed);
+	const undoneTodos = todos.filter((todo) => !todo.completed);
 
-    ]);
+	const onDragEnd = (result: DropResult) => {
+		const { source, destination } = result;
 
-  useEffect(() => {
-    axios.get('https://jsonplaceholder.typicode.com/todos?_limit=100').then((res)=>
-        {setTodos(res.data);}
-    );
-  }, []);
+		// dropped outside the list
+		if (!destination) {
+			return;
+		}
 
-  function computeHeight(){
+		if (source.droppableId === destination.droppableId) {
+			const temp =
+				destination.droppableId === "done"
+					? [...doneTodos]
+					: [...undoneTodos];
 
-  }
+			const [removed] = temp.splice(source.index, 1);
+			temp.splice(destination.index, 0, removed);
 
-  return (
-    <Wrapper>
-      <Header/>
-      <TodoContext.Provider value={todos}>
-        <Count/>
-      </TodoContext.Provider>
-      <InlineFlex style={{maxHeight:'85vh'}}>
-        <ListColumn>
-          {
-            todos.map(todo =>
-              <TodoCard key={todo.id} todo={todo} />
-            )
-          }
-        </ListColumn>
-      </InlineFlex>
-    </Wrapper>
+			destination.droppableId === "done"
+				? setTodos([...temp, ...undoneTodos])
+				: setTodos([...doneTodos, ...temp]);
+		} else {
+			let destStatus = false;
+			if (destination.droppableId === "done") {
+				destStatus = true;
+			} else {
+				destStatus = false;
+			}
 
-  )
+			let tempDest, tempSource;
+			if (destination.droppableId === "done") {
+				tempDest = [...doneTodos];
+				tempSource = [...undoneTodos];
+			} else {
+				tempDest = [...undoneTodos];
+				tempSource = [...doneTodos];
+			}
+
+			const [removed] = tempSource.splice(source.index, 1);
+
+			tempDest.splice(destination.index, 0, removed);
+
+			tempDest[destination.index].completed = destStatus;
+
+			setTodos([...tempSource, ...tempDest]);
+		}
+	};
+
+	return (
+		<Wrapper>
+			<Header />
+
+			<TodoContext.Provider value={todos}>
+				<Count />
+			</TodoContext.Provider>
+
+			<InlineFlex>
+				<DragDropContext onDragEnd={onDragEnd}>
+					<TodoContext.Provider value={undoneTodos}>
+						<ListColumn id={"undone"} />
+					</TodoContext.Provider>
+
+					<Button
+						title="All done"
+						cb={() => {
+							const newTodos: ITodo[] = todos.map((todo) => {
+								if (todo.completed === false)
+									todo.completed = !todo.completed;
+								return todo;
+							});
+							setTodos(newTodos);
+						}}
+					/>
+
+					<TodoContext.Provider value={doneTodos}>
+						<ListColumn id={"done"} />
+					</TodoContext.Provider>
+				</DragDropContext>
+			</InlineFlex>
+		</Wrapper>
+	);
 }
-
